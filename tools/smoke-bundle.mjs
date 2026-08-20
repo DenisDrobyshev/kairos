@@ -79,12 +79,17 @@ slider.dispatchEvent(new window.Event("input", { bubbles: true }));
 const after = document.querySelector(".meter-label")?.textContent ?? "";
 if (before === after) fail("moving a slider did not change the committed-hours readout");
 
-if (failed) {
-  process.exitCode = 1;
-} else {
+if (!failed) {
   console.log(
     `bundle boots: ${weeks} week cells, ${rows} categories, ${levers} levers, median ${figure}`,
   );
 }
 
 await window.happyDOM.close();
+
+// The bundle mounts a view that owns a running clock, and nothing here can
+// reach its dispose. happyDOM.close() clears its own timers on some Node
+// versions and not on others -- it did on 20 and did not on 22, where this
+// script simply never returned. A one-shot check has nothing left to do at
+// this point, so it says so explicitly rather than waiting to be tidied up.
+process.exit(failed ? 1 : 0);
