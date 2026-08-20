@@ -1,0 +1,25 @@
+{
+  "name": "kairos",
+  "version": "0.1.0",
+  "private": false,
+  "description": "A life-time ledger: how many discretionary hours you actually have, and what each habit costs against them.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bundle": "npm run build && node tools/bundle-standalone.mjs",
+    "smoke": "node tools/smoke-bundle.mjs",
+    "check": "tsc --noEmit && vitest run && vite build && node tools/smoke-bundle.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "happy-dom": "^20.11.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.4"
+  }
+}
