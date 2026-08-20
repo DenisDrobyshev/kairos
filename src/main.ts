@@ -27,6 +27,23 @@ function applyPatch(profile: Profile, patch: Partial<Profile>): Profile {
   if (patch.buckets) {
     Object.assign(next, { buckets: { ...profile.buckets, ...patch.buckets } });
   }
+  if (patch.during) {
+    const during = { ...profile.during };
+    for (const [host, overlap] of Object.entries(patch.during)) {
+      const cat = CATEGORY_BY_ID.get(host);
+      // Choosing "nothing else" drops the entry rather than storing a zero, so
+      // a cleared overlap disappears from the shared link too.
+      if (!cat?.canHost || !overlap.activity || overlap.hours <= 0) {
+        delete during[host];
+        continue;
+      }
+      during[host] = {
+        activity: overlap.activity,
+        hours: Math.min(cat.max, Math.max(0, overlap.hours)),
+      };
+    }
+    Object.assign(next, { during });
+  }
   // Retiring before today is not a plan, it is a typo.
   if (next.retirementAge < next.age) {
     Object.assign(next, { retirementAge: next.age });

@@ -20,6 +20,7 @@ import {
   type Bucket,
   type Category,
   type HorizonBasis,
+  type Overlap,
   type Profile,
   type Region,
   type Sex,
@@ -177,6 +178,7 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
   // ---- section: your day --------------------------------------------------
   const dayTitle = el("h2");
   const dayHint = el("p", { class: "hint" });
+  const duringHint = el("p", { class: "hint" });
   const bucketHint = el("p", { class: "hint" });
   const dayWarning = el("p", { class: "warning", hidden: "" });
   const dayMeter = el("div", { class: "meter" });
@@ -184,12 +186,22 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
   dayMeter.append(dayMeterFill);
   const dayMeterLabel = el("p", { class: "meter-label" });
 
+  /** The "of that, spent on" controls, present only on host categories. */
+  interface DuringControls {
+    readonly wrap: HTMLElement;
+    readonly label: El;
+    readonly select: HTMLSelectElement;
+    readonly slider: HTMLInputElement;
+    readonly readout: El;
+  }
+
   interface Row {
     readonly slider: HTMLInputElement;
     readonly readout: El;
     readonly label: El;
     readonly cadence: El;
     readonly buttons: Map<Bucket, HTMLButtonElement>;
+    readonly during?: DuringControls;
   }
   const rows = new Map<string, Row>();
   const dayBody = el("div", { class: "categories" });
@@ -223,20 +235,44 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
         seg.append(btn);
       }
 
-      dayBody.append(
-        el("div", { class: "cat-row" }, [
-          el("div", { class: "cat-head" }, [label, readout, cadence]),
-          slider,
-          seg,
-        ]),
-      );
-      rows.set(cat.id, { slider, readout, label, cadence, buttons });
+      const children: (Node | string)[] = [
+        el("div", { class: "cat-head" }, [label, readout, cadence]),
+        slider,
+        seg,
+      ];
+
+      let during: DuringControls | undefined;
+      if (cat.canHost) {
+        const dLabel = el("span", { class: "during-label" });
+        const dSelect = el("select", { class: "during-select" });
+        const dSlider = el("input", {
+          type: "range", min: "0", max: String(cat.max), step: String(cat.step),
+        });
+        const dReadout = el("span", { class: "during-value" });
+        const emit = (): void =>
+          cb.onProfile({
+            during: {
+              [cat.id]: { activity: dSelect.value, hours: Number(dSlider.value) },
+            } as Record<string, Overlap>,
+          });
+        dSelect.addEventListener("change", emit);
+        dSlider.addEventListener("input", emit);
+        const wrap = el("div", { class: "during" }, [dLabel, dSelect, dSlider, dReadout]);
+        during = { wrap, label: dLabel, select: dSelect, slider: dSlider, readout: dReadout };
+        children.push(wrap);
+      }
+
+      dayBody.append(el("div", { class: "cat-row" }, children));
+      rows.set(cat.id, {
+        slider, readout, label, cadence, buttons,
+        ...(during ? { during } : {}),
+      });
     }
   }
 
   main.append(
     el("section", { class: "card" }, [
-      dayTitle, dayHint, dayMeter, dayMeterLabel, dayWarning, bucketHint, dayBody,
+      dayTitle, dayHint, duringHint, dayMeter, dayMeterLabel, dayWarning, bucketHint, dayBody,
     ]),
   );
 
@@ -379,6 +415,7 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
     // your day
     dayTitle.textContent = t(lang, "day.title");
     dayHint.textContent = t(lang, "day.hint");
+    duringHint.textContent = t(lang, "day.during.hint");
     bucketHint.textContent = t(lang, "bucket.hint");
     for (const g of groups) groupTitles.get(g)!.textContent = t(lang, `group.${g}`);
     dayMeterFill.style.width = `${Math.min(100, (ledger.committedHoursPerDay / 24) * 100)}%`;
@@ -405,6 +442,37 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
         btn.title = t(lang, `bucket.${b}.hint`);
         btn.classList.toggle("on", b === active);
         btn.setAttribute("aria-pressed", String(b === active));
+      }
+
+      const d = row.during;
+      if (d) {
+        // Nothing to share out of an activity you do not do.
+        d.wrap.hidden = value <= 0;
+        d.label.textContent = t(lang, "day.during");
+
+        const guests = CATEGORIES.filter((c) => c.canOverlap && c.id !== cat.id);
+        const built = `${lang}|${guests.map((g) => g.id).join(",")}`;
+        if (d.select.dataset.built !== built) {
+          d.select.textContent = "";
+          d.select.append(el("option", { value: "" }, [t(lang, "day.during.none")]));
+          for (const g of guests) {
+            d.select.append(el("option", { value: g.id }, [g.labels[lang]]));
+          }
+          d.select.dataset.built = built;
+        }
+
+        const overlap = profile.during[cat.id];
+        const activity = overlap?.activity ?? "";
+        d.select.value = activity;
+        // You cannot spend more of the hour than the hour holds, so the slider
+        // is bounded by the host's own figure rather than the category maximum.
+        d.slider.max = String(value);
+        d.slider.disabled = activity === "";
+        const shared = activity ? Math.min(overlap?.hours ?? 0, value) : 0;
+        if (focused !== d.slider) d.slider.value = String(shared);
+        d.readout.textContent = activity
+          ? `${num(lang, shared, shared % 1 === 0 ? 0 : 2)} ${t(lang, "unit.hours")}`
+          : "";
       }
     }
 

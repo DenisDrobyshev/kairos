@@ -26,7 +26,7 @@ import {
   type Sex,
   type Horizon,
 } from "./mortality.js";
-import { CATEGORIES, type Bucket, type Category } from "./taxonomy.js";
+import { CATEGORIES, CATEGORY_BY_ID, type Bucket, type Category } from "./taxonomy.js";
 
 export const DAYS_PER_YEAR = 365.2425;
 export const WEEKS_PER_YEAR = DAYS_PER_YEAR / 7;
@@ -34,6 +34,27 @@ export const HOURS_PER_YEAR = DAYS_PER_YEAR * 24;
 
 /** Which point of the survival distribution to budget against. */
 export type HorizonBasis = "median" | "mean" | "p10" | "p90";
+
+/**
+ * A second activity running on top of a host category's hours.
+ *
+ * Scrolling a feed on the train does not make the commute shorter, so this
+ * never changes how many hours are committed. What it changes is what those
+ * hours count as: the overlapped part of the commute leaves the commute's
+ * bucket and joins the feed's. An unavoidable hour is not redeemed by being
+ * shorter, it is redeemed by what you put in it.
+ *
+ * Declaring the overlap on the *host* rather than the guest also sidesteps the
+ * unit trap this whole module exists to avoid: the commute is counted per
+ * working day and feeds per calendar day, so a share of the commute has to be
+ * expressed in the commute's own cadence or the arithmetic silently drifts.
+ */
+export interface Overlap {
+  /** Category id of the activity running on top. */
+  readonly activity: string;
+  /** Hours of the host, in the host's cadence, spent on that activity. */
+  readonly hours: number;
+}
 
 export interface Profile {
   readonly age: number;
@@ -47,6 +68,8 @@ export interface Profile {
   readonly vacationDays: number;
   readonly hours: Readonly<Record<string, number>>;
   readonly buckets: Readonly<Record<string, Bucket>>;
+  /** Keyed by host category id. */
+  readonly during: Readonly<Record<string, Overlap>>;
 }
 
 export interface LedgerRow {
@@ -57,6 +80,8 @@ export interface LedgerRow {
   readonly activeYears: number;
   /** Total hours committed to this category over the whole horizon. */
   readonly totalHours: number;
+  /** Of that total, hours inherited from a host category running underneath. */
+  readonly overlapHours: number;
   /** Hours added or removed per extra hour-per-unit -- the lever arm. */
   readonly leverArm: number;
   /** Share of the whole remaining horizon. */
@@ -121,19 +146,42 @@ export function computeLedger(p: Profile): Ledger {
   const byBucket: Record<Bucket, number> = { alive: 0, neutral: 0, leak: 0 };
   let perDay = 0;
 
+  // Hours moved from a host category to whatever was running on top of it.
+  // Computed first, because a row's own total depends on what it gave away and
+  // on what it received from elsewhere.
+  const givenAway = new Map<string, number>();
+  const received = new Map<string, number>();
+  for (const host of CATEGORIES) {
+    const overlap = p.during[host.id];
+    if (!overlap || !host.canHost) continue;
+    const guest = CATEGORY_BY_ID.get(overlap.activity);
+    if (!guest?.canOverlap || guest.id === host.id) continue;
+
+    const hostHours = p.hours[host.id] ?? host.defaultHours;
+    // You cannot spend more of an hour than the hour contains.
+    const shared = Math.max(0, Math.min(overlap.hours, hostHours));
+    if (shared <= 0) continue;
+
+    const arm = unitsPerYear(host, p) * (host.phase === "working" ? workingYears : remainingYears);
+    givenAway.set(host.id, (givenAway.get(host.id) ?? 0) + arm * shared);
+    received.set(guest.id, (received.get(guest.id) ?? 0) + arm * shared);
+  }
+
   for (const cat of CATEGORIES) {
     const hoursPerUnit = p.hours[cat.id] ?? cat.defaultHours;
     const bucket = p.buckets[cat.id] ?? cat.defaultBucket;
     const activeYears = cat.phase === "working" ? workingYears : remainingYears;
     const perYear = unitsPerYear(cat, p);
     const leverArm = perYear * activeYears;
-    const total = leverArm * hoursPerUnit;
+    const overlapHours = received.get(cat.id) ?? 0;
+    const total = leverArm * hoursPerUnit - (givenAway.get(cat.id) ?? 0) + overlapHours;
 
     byBucket[bucket] += total;
 
     // The same arithmetic expressed as today's day, so an impossible profile
     // (more than 24 committed hours) is caught at input time rather than
-    // surfacing later as a negative remainder.
+    // surfacing later as a negative remainder. Overlap is deliberately absent:
+    // it relabels hours without consuming or freeing any.
     perDay += (perYear * hoursPerUnit) / DAYS_PER_YEAR;
 
     rows.push({
@@ -142,6 +190,7 @@ export function computeLedger(p: Profile): Ledger {
       hoursPerUnit,
       activeYears,
       totalHours: total,
+      overlapHours,
       leverArm,
       share: totalHours > 0 ? total / totalHours : 0,
     });

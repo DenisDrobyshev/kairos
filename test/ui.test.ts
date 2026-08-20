@@ -121,6 +121,53 @@ describe("view", () => {
   });
 });
 
+describe("overlap controls", () => {
+  it("offers the second-activity row only where it makes sense", () => {
+    const { root, update } = harness();
+    update(state());
+    const hosts = CATEGORIES.filter((c) => c.canHost).length;
+    expect(hosts).toBeGreaterThan(0);
+    expect(root.querySelectorAll(".during")).toHaveLength(hosts);
+  });
+
+  it("keeps the slider inert until a second activity is chosen", () => {
+    const { root, update } = harness();
+    update(state());
+    const slider = root.querySelector<HTMLInputElement>('.during input[type="range"]');
+    expect(slider?.disabled).toBe(true);
+  });
+
+  it("bounds the share by the host's own hours", () => {
+    const { root, update } = harness();
+    update(
+      state({
+        hours: { ...defaultProfile().hours, commute: 2 },
+        during: { commute: { activity: "feeds", hours: 2 } },
+      }),
+    );
+    const slider = root.querySelector<HTMLInputElement>('.during input[type="range"]');
+    expect(slider?.disabled).toBe(false);
+    expect(Number(slider?.max)).toBe(2);
+  });
+
+  it("hides the row for an activity you do not do at all", () => {
+    const { root, update } = harness();
+    update(state({ hours: { ...defaultProfile().hours, commute: 0 } }));
+    const wraps = [...root.querySelectorAll<HTMLElement>(".during")];
+    expect(wraps.some((w) => w.hidden)).toBe(true);
+  });
+
+  it("emits a sparse during patch when a second activity is picked", () => {
+    const { root, update, calls } = harness();
+    update(state());
+    const select = root.querySelector<HTMLSelectElement>(".during-select");
+    select!.value = "feeds";
+    select!.dispatchEvent(new Event("change"));
+    expect(calls).toHaveLength(1);
+    expect(Object.keys(calls[0]!)).toEqual(["during"]);
+  });
+});
+
 describe("shareable state", () => {
   it("round-trips a profile through the URL", () => {
     const original = state(
@@ -136,6 +183,18 @@ describe("shareable state", () => {
     expect(restored.profile.vacationDays).toBe(40);
     expect(restored.profile.hours).toEqual(original.profile.hours);
     expect(restored.profile.buckets).toEqual(original.profile.buckets);
+  });
+
+  it("round-trips an overlap", () => {
+    const original = state({ during: { commute: { activity: "craft", hours: 0.75 } } });
+    const restored = decode(encode(original), "ru");
+    expect(restored.profile.during.commute).toEqual({ activity: "craft", hours: 0.75 });
+  });
+
+  it("drops an overlap whose host or guest is not allowed", () => {
+    for (const bad of ["v=1&d=sleep-feeds-2", "v=1&d=commute-games-1", "v=1&d=junk-junk-1"]) {
+      expect(decode(bad, "ru").profile.during).toEqual({});
+    }
   });
 
   it("keeps the link readable rather than base64", () => {

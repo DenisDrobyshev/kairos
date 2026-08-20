@@ -52,6 +52,13 @@ export interface Category {
   readonly max: number;
   readonly step: number;
   readonly group: "given" | "obligation" | "upkeep" | "chosen";
+  /**
+   * Your hands are busy but your attention is not, so something else can run
+   * on top of these hours: a commute, the washing up, a walk.
+   */
+  readonly canHost?: boolean;
+  /** Can be the thing running on top: a podcast, a feed, a phone call. */
+  readonly canOverlap?: boolean;
   readonly aw?: AwMatcher;
 }
 
@@ -92,6 +99,7 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "leak",
     max: 5,
     step: 0.25,
+    canHost: true,
     group: "obligation",
     aw: { offScreen: true },
   },
@@ -104,6 +112,7 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "neutral",
     max: 6,
     step: 0.25,
+    canHost: true,
     group: "upkeep",
     aw: { offScreen: true },
   },
@@ -128,6 +137,7 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "neutral",
     max: 6,
     step: 0.25,
+    canHost: true,
     group: "upkeep",
     aw: { offScreen: true },
   },
@@ -154,6 +164,7 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "leak",
     max: 10,
     step: 0.25,
+    canOverlap: true,
     group: "chosen",
     aw: {
       apps: ["Telegram", "Discord", "Instagram"],
@@ -172,6 +183,7 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "leak",
     max: 10,
     step: 0.25,
+    canOverlap: true,
     group: "chosen",
     aw: {
       apps: ["vlc", "mpv", "Netflix"],
@@ -199,6 +211,7 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "alive",
     max: 12,
     step: 0.25,
+    canOverlap: true,
     group: "chosen",
     aw: { offScreen: true },
   },
@@ -211,6 +224,7 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "alive",
     max: 6,
     step: 0.25,
+    canHost: true,
     group: "chosen",
     aw: { offScreen: true },
   },
@@ -223,6 +237,7 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "alive",
     max: 12,
     step: 0.25,
+    canOverlap: true,
     group: "chosen",
     aw: {
       apps: ["Code\.exe", "idea64", "Obsidian", "Anki"],

@@ -208,9 +208,15 @@ input[type="checkbox"] { accent-color: var(--alive); width: 1rem; height: 1rem; 
 
 /* ---- weeks grid --------------------------------------------------------- */
 
-.weeks { display: flex; flex-direction: column; gap: 2px; margin: 1rem 0 0.75rem; }
+.weeks {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 1rem 0 0.75rem;
+  max-width: min(100%, 34rem);
+}
 
-.week-row { display: grid; grid-template-columns: repeat(52, 1fr); gap: 2px; }
+.week-row { display: grid; grid-template-columns: repeat(52, 1fr); gap: 1px; }
 
 .week { aspect-ratio: 1; border-radius: 1px; background: var(--unallocated); }
 .week.lived { background: var(--lived); }
@@ -260,7 +266,7 @@ input[type="checkbox"] { accent-color: var(--alive); width: 1rem; height: 1rem; 
 .cat-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-areas: "head seg" "slider seg";
+  grid-template-areas: "head seg" "slider seg" "during during";
   align-items: center;
   gap: 0.35rem 1rem;
   padding: 0.6rem 0;
@@ -281,6 +287,35 @@ input[type="range"] {
 }
 
 .segmented { grid-area: seg; display: flex; gap: 2px; flex: none; }
+
+.during {
+  grid-area: during;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--faint);
+}
+
+/* Beats the display:flex above on specificity, so [hidden] actually hides. */
+.during[hidden] { display: none; }
+
+.during-select {
+  width: auto;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.82rem;
+}
+
+.during input[type="range"] { flex: 1 1 6rem; width: auto; }
+.during input[type="range"]:disabled { opacity: 0.3; }
+
+.during-value {
+  color: var(--alive);
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5rem;
+}
 
 .seg {
   background: var(--surface-2);
@@ -395,7 +430,7 @@ input[type="range"] {
 @media (max-width: 42rem) {
   .cat-row {
     grid-template-columns: 1fr;
-    grid-template-areas: "head" "slider" "seg";
+    grid-template-areas: "head" "slider" "seg" "during";
     gap: 0.5rem;
   }
   .segmented { justify-content: stretch; }

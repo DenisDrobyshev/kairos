@@ -61,7 +61,11 @@ const ru: Dict = {
 
   "day.title": "Обычные сутки",
   "day.hint":
-    "Ставь честно, а не как хотелось бы. Сравнивать будешь с собой, а не с кем-то.",
+    "Расписывай обычный будний день, а не идеальный. Если сегодня вышло не как всегда — бери то, что повторяется чаще. Ставь честно: сравнивать ты будешь с собой, и завышенные цифры обманут только тебя. Дробные часы можно: 15 минут — это 0.25, полчаса — 0.5.",
+  "day.during": "Из них занято",
+  "day.during.none": "ничем больше",
+  "day.during.hint":
+    "У дороги, быта, еды и спорта есть строка «из них занято». Она для того, что ты делаешь одновременно: слушаешь лекции в метро, листаешь ленту за мытьём посуды, звонишь маме на прогулке. Такие часы не пропадают и не удваиваются — дорога короче не станет, но эти минуты зачтутся тому, чем ты их занял.",
   "day.perDay": "ч/день",
   "day.perWorkday": "ч/рабочий день",
   "day.perWeek": "ч/неделю",
@@ -80,7 +84,7 @@ const ru: Dict = {
   "bucket.leak": "Утечка",
   "bucket.unallocated": "Ничем не занято",
   "bucket.hint":
-    "Вот это решаешь только ты. Один и тот же час — у кого-то жизнь, у кого-то утечка. Арифметика за тебя это не решит.",
+    "Теперь реши, чем считать каждый час. Правильного ответа нет, и в этом весь смысл. Жизнь — то, что ты и так хотел бы делать. Плата — то, без чего не обойтись, но радости никакой. Утечка — то, что забрал бы обратно, если бы мог. Один и тот же час у двух людей попадёт в разные корзины, и арифметика за тебя это не решит.",
   "bucket.alive.hint": "Считаешь прожитым",
   "bucket.neutral.hint": "Цена существования",
   "bucket.leak.hint": "Отдал бы обратно",
@@ -178,7 +182,11 @@ const en: Dict = {
 
   "day.title": "An ordinary day",
   "day.hint":
-    "Enter it honestly rather than aspirationally. The comparison is with yourself, not with anyone else.",
+    "Describe an ordinary weekday, not an ideal one. If today went differently, use whatever repeats most often. Enter it honestly: the comparison is with yourself, so flattering numbers only fool you. Fractions are fine — 15 minutes is 0.25, half an hour is 0.5.",
+  "day.during": "Of that, spent on",
+  "day.during.none": "nothing else",
+  "day.during.hint":
+    "Commuting, chores, meals and exercise each have an «of that, spent on» row. It is for things you do at the same time: lectures on the train, a feed while washing up, a phone call on a walk. Those hours are neither lost nor double-counted — the commute gets no shorter, but the minutes count towards whatever you filled them with.",
   "day.perDay": "h/day",
   "day.perWorkday": "h/working day",
   "day.perWeek": "h/week",
@@ -197,7 +205,7 @@ const en: Dict = {
   "bucket.leak": "Leak",
   "bucket.unallocated": "Committed to nothing",
   "bucket.hint":
-    "This part is yours alone. The same hour is living for one person and leak for another, and the arithmetic cannot decide it for you.",
+    "Now decide what each hour counts as. There is no right answer, and that is the point. Living is what you would want to be doing anyway. Cost is what you cannot avoid and take no joy in. Leak is what you would take back if you could. The same hour lands in different buckets for different people, and the arithmetic cannot decide it for you.",
   "bucket.alive.hint": "You count it as lived",
   "bucket.neutral.hint": "The price of existing",
   "bucket.leak.hint": "You would take it back",

@@ -14,6 +14,7 @@ import {
   DEFAULT_IMPROVEMENT,
   type Bucket,
   type HorizonBasis,
+  type Overlap,
   type Profile,
   type Region,
   type Sex,
@@ -47,6 +48,7 @@ export function defaultProfile(): Profile {
     vacationDays: 28,
     hours: defaultHours(),
     buckets: defaultBuckets(),
+    during: {},
   };
 }
 
@@ -77,6 +79,11 @@ export function encode(state: AppState): string {
     return [c.id, h, b].join(SEP);
   }).join("_");
 
+  const during = Object.entries(p.during)
+    .filter(([, o]) => o && o.hours > 0)
+    .map(([host, o]) => [host, o.activity, o.hours].join(SEP))
+    .join("_");
+
   const q = new URLSearchParams({
     v: String(SCHEMA),
     lang: state.lang,
@@ -89,6 +96,7 @@ export function encode(state: AppState): string {
     vac: String(p.vacationDays),
     imp: p.improvement > 0 ? "1" : "0",
     c: cats,
+    d: during,
   });
   return q.toString();
 }
@@ -110,6 +118,16 @@ export function decode(raw: string, fallbackLang: Lang): AppState {
     if (b && b in CODE_BUCKET) buckets[cat.id] = CODE_BUCKET[b] as Bucket;
   }
 
+  const during: Record<string, Overlap> = {};
+  for (const chunk of (q.get("d") ?? "").split("_")) {
+    const [host, activity, h] = chunk.split(SEP);
+    const hostCat = CATEGORIES.find((c) => c.id === host && c.canHost);
+    const guestCat = CATEGORIES.find((c) => c.id === activity && c.canOverlap);
+    if (!hostCat || !guestCat) continue;
+    const value = clamp(Number(h), 0, hostCat.max);
+    if (value > 0) during[hostCat.id] = { activity: guestCat.id, hours: value };
+  }
+
   const age = clamp(Number(q.get("age")), 1, 100);
   return {
     lang: oneOf(q.get("lang"), LANGS, fallbackLang),
@@ -125,6 +143,7 @@ export function decode(raw: string, fallbackLang: Lang): AppState {
       improvement: q.get("imp") === "0" ? 0 : DEFAULT_IMPROVEMENT,
       hours,
       buckets,
+      during,
     },
   };
 }

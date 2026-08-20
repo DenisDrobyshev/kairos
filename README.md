@@ -22,6 +22,14 @@ Here everything accumulates in hours from a single horizon and converts to other
 
 The same hour lands in different buckets for different people. The arithmetic does not settle that.
 
+## Doing two things at once
+
+Commuting, chores, meals and exercise occupy your hands but not your attention, so a second activity can run on top: lectures on the train, a feed while washing up, a call on a walk. Those categories carry an "of that, spent on" row.
+
+An overlap never changes the number of hours. The commute gets no shorter because you filled it — what changes is **what those hours count as**: the overlapped share leaves the host's bucket and joins the guest's. An unavoidable hour is not shortened, it is redeemed by what you put in it.
+
+The share is declared on the host rather than the guest, which is not cosmetic. The commute is counted per working day and feeds per calendar day, so a share of the commute can only be expressed in the commute's own cadence — otherwise the arithmetic drifts, which is the exact error this project exists to correct.
+
 ## The mortality model
 
 Gompertz–Makeham: `μ(x) = A + B·exp(C·x)`.

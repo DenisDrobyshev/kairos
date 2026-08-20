@@ -153,6 +153,7 @@ function baseProfile(over: Partial<Profile> = {}): Profile {
     vacationDays: 28,
     hours: defaultHours(),
     buckets: defaultBuckets(),
+    during: {},
     ...over,
   };
 }
@@ -213,6 +214,92 @@ describe("ledger", () => {
     const l = computeLedger(baseProfile({ hours: harsh, improvement: 0 }));
     expect(l.unallocatedHours).toBeGreaterThan(40_000);
     expect(l.unallocatedHours).toBeLessThan(200_000);
+  });
+});
+
+describe("overlapping activities", () => {
+  /** Half the commute spent on feeds. */
+  const withOverlap = (hours = 0.5) =>
+    baseProfile({ during: { commute: { activity: "feeds", hours } } });
+
+  it("does not change how many hours the day commits", () => {
+    const plain = computeLedger(baseProfile());
+    const shared = computeLedger(withOverlap());
+    // Listening to something on the train does not lengthen or shorten it.
+    expect(shared.committedHoursPerDay).toBeCloseTo(plain.committedHoursPerDay, 12);
+    expect(shared.totalHours).toBeCloseTo(plain.totalHours, 6);
+    expect(shared.unallocatedHours).toBeCloseTo(plain.unallocatedHours, 6);
+  });
+
+  it("moves the overlapped hours from the host to the guest", () => {
+    const plain = computeLedger(baseProfile());
+    const shared = computeLedger(withOverlap());
+    const commuteBefore = plain.rows.find((r) => r.category.id === "commute")!;
+    const commuteAfter = shared.rows.find((r) => r.category.id === "commute")!;
+    const feedsBefore = plain.rows.find((r) => r.category.id === "feeds")!;
+    const feedsAfter = shared.rows.find((r) => r.category.id === "feeds")!;
+
+    const moved = commuteBefore.totalHours - commuteAfter.totalHours;
+    expect(moved).toBeGreaterThan(0);
+    expect(feedsAfter.totalHours - feedsBefore.totalHours).toBeCloseTo(moved, 6);
+    expect(feedsAfter.overlapHours).toBeCloseTo(moved, 6);
+    // Exactly half of a one-hour commute.
+    expect(moved).toBeCloseTo(commuteBefore.totalHours / 2, 6);
+  });
+
+  it("still conserves hours across buckets", () => {
+    const l = computeLedger(withOverlap());
+    const sum = l.byBucket.alive + l.byBucket.neutral + l.byBucket.leak;
+    expect(sum + l.unallocatedHours).toBeCloseTo(l.totalHours, 6);
+  });
+
+  it("re-buckets an unavoidable hour when the guest is bucketed differently", () => {
+    const buckets = { ...defaultBuckets(), commute: "leak" as const, craft: "alive" as const };
+    const plain = computeLedger(baseProfile({ buckets }));
+    const shared = computeLedger(
+      baseProfile({ buckets, during: { commute: { activity: "craft", hours: 1 } } }),
+    );
+    // A whole commute spent on lectures: the leak shrinks, living grows.
+    expect(shared.byBucket.leak).toBeLessThan(plain.byBucket.leak);
+    expect(shared.byBucket.alive).toBeGreaterThan(plain.byBucket.alive);
+  });
+
+  it("cannot share out more of an hour than the hour holds", () => {
+    const greedy = computeLedger(
+      baseProfile({ during: { commute: { activity: "feeds", hours: 99 } } }),
+    );
+    const commute = greedy.rows.find((r) => r.category.id === "commute")!;
+    expect(commute.totalHours).toBeCloseTo(0, 6);
+    expect(commute.totalHours).toBeGreaterThanOrEqual(0);
+  });
+
+  it("ignores a host that cannot host and a guest that cannot overlap", () => {
+    const plain = computeLedger(baseProfile());
+    // Sleep is not a host; games are not something you do while doing something else.
+    const bogusHost = computeLedger(
+      baseProfile({ during: { sleep: { activity: "feeds", hours: 2 } } }),
+    );
+    const bogusGuest = computeLedger(
+      baseProfile({ during: { commute: { activity: "games", hours: 0.5 } } }),
+    );
+    for (const l of [bogusHost, bogusGuest]) {
+      for (const row of l.rows) {
+        const before = plain.rows.find((r) => r.category.id === row.category.id)!;
+        expect(row.totalHours).toBeCloseTo(before.totalHours, 6);
+      }
+    }
+  });
+
+  it("charges the overlap at the host's cadence, not the guest's", () => {
+    // Commute is per working day, feeds per calendar day. An hour of overlap is
+    // an hour of *commute*, so it must be worth a working day's lever arm.
+    const p = baseProfile({ during: { commute: { activity: "feeds", hours: 1 } } });
+    const l = computeLedger(p);
+    const commute = l.rows.find((r) => r.category.id === "commute")!;
+    const feeds = l.rows.find((r) => r.category.id === "feeds")!;
+    expect(feeds.overlapHours).toBeCloseTo(commute.leverArm * 1, 6);
+    // If it had been charged at the daily cadence it would be much larger.
+    expect(feeds.overlapHours).toBeLessThan(commute.leverArm * 1.5);
   });
 });
 
