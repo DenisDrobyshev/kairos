@@ -24,12 +24,22 @@ const { document } = window;
 document.body.innerHTML = '<div id="app"></div>';
 
 // The bundle expects browser globals to exist as globals, not as window props.
+//
+// These are installed with defineProperty rather than assignment because Node
+// ships some of them itself: since Node 21 `globalThis.navigator` is a
+// getter-only accessor, and a plain assignment to it throws. defineProperty
+// works whether the name is absent, writable, or an existing accessor.
 for (const key of [
   "window", "document", "navigator", "location", "history", "localStorage",
   "HTMLElement", "Event", "Node", "getComputedStyle", "requestAnimationFrame",
   "setTimeout", "clearTimeout", "prompt",
 ]) {
-  globalThis[key] = key === "window" ? window : window[key];
+  Object.defineProperty(globalThis, key, {
+    value: key === "window" ? window : window[key],
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  });
 }
 
 let failed = false;
