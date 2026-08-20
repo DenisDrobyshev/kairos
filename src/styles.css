@@ -62,9 +62,28 @@ header { padding: clamp(1.5rem, 6vw, 4rem) 0 2rem; }
 .brand {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: clamp(1rem, 4vw, 2.5rem);
+  flex-wrap: wrap;
 }
+
+/*
+ * Takes the slack between the wordmark and the language switch, which was
+ * empty only because two flex children and space-between leave a hole. The
+ * name is opaque on its own, so the gap earns its keep by explaining it.
+ */
+.gloss {
+  flex: 1 1 16rem;
+  margin: 0;
+  min-width: 0;
+  max-width: 46ch;
+  color: var(--faint);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  border-left: 1px solid var(--line);
+  padding-left: clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.langs { margin-left: auto; }
 
 h1 {
   margin: 0;

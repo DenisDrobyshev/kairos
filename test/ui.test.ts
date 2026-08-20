@@ -86,6 +86,16 @@ describe("view", () => {
     expect(warning?.textContent).toContain("сутках");
   });
 
+  it("explains its own name in the header", () => {
+    const { root, update } = harness();
+    update(state({}, "ru"));
+    const gloss = root.querySelector(".gloss")?.textContent ?? "";
+    expect(gloss).toContain("καιρός");
+    expect(gloss).toContain("χρόνος");
+    update(state({}, "en"));
+    expect(root.querySelector(".gloss")?.textContent).toContain("the right moment");
+  });
+
   it("switches both languages, not only labels", () => {
     const { root, update } = harness();
     update(state({}, "ru"));

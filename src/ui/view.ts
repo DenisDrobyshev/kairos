@@ -84,6 +84,7 @@ export function mount(root: El, cb: ViewCallbacks): MountedView {
   // ---- header -------------------------------------------------------------
   const tagline = el("p", { class: "tagline" });
   const lede = el("p", { class: "lede" });
+  const gloss = el("p", { class: "gloss" });
   const langBox = el("div", { class: "langs" });
   const langButtons = new Map<Lang, HTMLButtonElement>();
   for (const l of LANGS) {
@@ -94,7 +95,7 @@ export function mount(root: El, cb: ViewCallbacks): MountedView {
   }
   root.append(
     el("header", {}, [
-      el("div", { class: "brand" }, [el("h1", {}, ["kairos"]), langBox]),
+      el("div", { class: "brand" }, [el("h1", {}, ["kairos"]), gloss, langBox]),
       tagline,
       lede,
     ]),
@@ -418,6 +419,7 @@ export function mount(root: El, cb: ViewCallbacks): MountedView {
     focused = document.activeElement;
 
     document.documentElement.lang = lang;
+    gloss.textContent = t(lang, "brand.gloss");
     tagline.textContent = t(lang, "app.tagline");
     lede.textContent = t(lang, "app.lede");
     for (const [l, b] of langButtons) b.classList.toggle("on", l === lang);

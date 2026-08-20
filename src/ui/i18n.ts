@@ -11,6 +11,8 @@ export const LANGS: readonly Lang[] = ["ru", "en"] as const;
 type Dict = Record<string, string>;
 
 const ru: Dict = {
+  "brand.gloss":
+    "καιρός — верный момент. Второе греческое слово для времени, χρόνος, значит просто количество.",
   "app.tagline": "Сколько времени у тебя осталось на самом деле",
   "app.lede":
     "Введи свой обычный день по часам. Посчитаем, во что он складывается за всю оставшуюся жизнь.",
@@ -163,6 +165,8 @@ const ru: Dict = {
 };
 
 const en: Dict = {
+  "brand.gloss":
+    "καιρός — the right moment. The other Greek word for time, χρόνος, means mere quantity.",
   "app.tagline": "How much time you actually have left",
   "app.lede":
     "Enter your ordinary day, hour by hour. See what it adds up to over the rest of your life.",
