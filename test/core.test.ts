@@ -11,6 +11,7 @@ import {
   applyPlan,
   ownTimePerDay,
   CATEGORIES,
+  PRESETS,
   levers,
   dailyHourValue,
   defaultHours,
@@ -304,6 +305,56 @@ describe("overlapping activities", () => {
     expect(feeds.overlapHours).toBeCloseTo(commute.leverArm * 1, 6);
     // If it had been charged at the daily cadence it would be much larger.
     expect(feeds.overlapHours).toBeLessThan(commute.leverArm * 1.5);
+  });
+});
+
+describe("presets", () => {
+  /**
+   * A starting point that trips the impossible-day warning the moment you pick
+   * it would be a poor welcome, and the numbers are easy to get wrong by hand
+   * because work and commute are counted per working day rather than per day.
+   */
+  it.each(PRESETS.map((p) => [p.id, p] as const))(
+    "%s describes a day that fits in a day",
+    (_id, preset) => {
+      const l = computeLedger(
+        baseProfile({
+          hours: preset.hours,
+          workDaysPerWeek: preset.workDaysPerWeek,
+          vacationDays: preset.vacationDays,
+        }),
+      );
+      expect(l.overcommitted).toBe(false);
+      expect(l.committedHoursPerDay).toBeLessThan(24);
+      // And it should be a full day, not a sketch of one.
+      expect(l.committedHoursPerDay).toBeGreaterThan(19);
+    },
+  );
+
+  it.each(PRESETS.map((p) => [p.id, p] as const))(
+    "%s sets every category",
+    (_id, preset) => {
+      expect(Object.keys(preset.hours).sort()).toEqual(
+        CATEGORIES.map((c) => c.id).sort(),
+      );
+    },
+  );
+
+  it("gives distinguishable starting points", () => {
+    const shapes = PRESETS.map((p) => JSON.stringify(p.hours));
+    expect(new Set(shapes).size).toBe(PRESETS.length);
+  });
+
+  it("leaves every preset with a reachable four-hour target", () => {
+    for (const preset of PRESETS) {
+      const p = baseProfile({
+        hours: preset.hours,
+        workDaysPerWeek: preset.workDaysPerWeek,
+        vacationDays: preset.vacationDays,
+      });
+      const plan = buildPlan(p, 4);
+      expect(ownTimePerDay(applyPlan(p, plan))).toBeCloseTo(plan.achievedPerDay, 1);
+    }
   });
 });
 

@@ -1,4 +1,10 @@
-import { CATEGORY_BY_ID, applyPlan, buildPlan, type Profile } from "./core/index.js";
+import {
+  CATEGORY_BY_ID,
+  PRESET_BY_ID,
+  applyPlan,
+  buildPlan,
+  type Profile,
+} from "./core/index.js";
 import { detectLang, type Lang } from "./ui/i18n.js";
 import { defaultProfile, encode, load, persist, type AppState } from "./ui/state.js";
 import { flashShare, mount } from "./ui/view.js";
@@ -51,9 +57,27 @@ function applyPatch(profile: Profile, patch: Partial<Profile>): Profile {
   return next;
 }
 
-const update = mount(root, {
+const view = mount(root, {
   onProfile(patch) {
     state = { ...state, profile: applyPatch(state.profile, patch) };
+    commit();
+  },
+  onPreset(id: string) {
+    const preset = PRESET_BY_ID.get(id);
+    if (!preset) return;
+    // A preset replaces the whole day rather than merging into it: half of one
+    // shape and half of another describes nobody.
+    state = {
+      ...state,
+      profile: {
+        ...state.profile,
+        hours: { ...preset.hours },
+        buckets: { ...state.profile.buckets, ...(preset.buckets ?? {}) },
+        during: {},
+        workDaysPerWeek: preset.workDaysPerWeek,
+        vacationDays: preset.vacationDays,
+      },
+    };
     commit();
   },
   onTarget(hoursPerDay: number) {
@@ -95,13 +119,13 @@ const update = mount(root, {
 
 function commit(): void {
   persist(state);
-  update(state);
+  view.update(state);
 }
 
 window.addEventListener("hashchange", () => {
   const next = load(state.lang);
   state = next;
-  update(state);
+  view.update(state);
 });
 
 commit();

@@ -13,6 +13,7 @@ import {
   CATEGORY_BY_ID,
   BUCKETS,
   buildPlan,
+  PRESETS,
   computeLedger,
   levers,
   dailyHourValue,
@@ -29,11 +30,23 @@ import {
   type Sex,
 } from "../core/index.js";
 import { t, LANGS, type Lang } from "./i18n.js";
+import { createClock } from "./clock.js";
 import type { AppState } from "./state.js";
 import { age as fmtAge, bigCount, hours, hoursAsYears, num, percent, years } from "./format.js";
 
+export interface MountedView {
+  update(state: AppState): void;
+  /**
+   * Stop the clock. The view owns a live interval, so a caller that mounts more
+   * than once -- every test that renders, for one -- leaks a ticking timer and
+   * never lets the process exit without this.
+   */
+  dispose(): void;
+}
+
 export interface ViewCallbacks {
   onProfile(patch: Partial<Profile>): void;
+  onPreset(id: string): void;
   onTarget(hoursPerDay: number): void;
   onApplyPlan(): void;
   onLang(lang: Lang): void;
@@ -65,7 +78,7 @@ function field(labelEl: El, control: El, hint?: El): El {
   return el("div", { class: "field" }, hint ? [labelEl, control, hint] : [labelEl, control]);
 }
 
-export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
+export function mount(root: El, cb: ViewCallbacks): MountedView {
   root.textContent = "";
 
   // ---- header -------------------------------------------------------------
@@ -155,9 +168,19 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
   const rangeLine = el("p", { class: "range-line" });
   const remainingLine = el("p", { class: "range-line" });
   const periodNote = el("p", { class: "hint" });
+  const clock = createClock();
+  const clockLegend = el("p", { class: "clock-legend" });
+  const clockCaption = el("p", { class: "hint" });
   main.append(
     el("section", { class: "card horizon" }, [
-      horizonTitle, medianLead, medianBig, rangeLine, remainingLine, periodNote,
+      horizonTitle,
+      el("div", { class: "horizon-body" }, [
+        el("div", { class: "horizon-figures" }, [
+          medianLead, medianBig, rangeLine, remainingLine, periodNote,
+        ]),
+        el("div", { class: "clock-wrap" }, [clock.root, clock.readout, clockLegend]),
+      ]),
+      clockCaption,
     ]),
   );
 
@@ -182,6 +205,16 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
 
   // ---- section: your day --------------------------------------------------
   const dayTitle = el("h2");
+  const presetTitle = el("h3", { class: "group" });
+  const presetHint = el("p", { class: "hint" });
+  const presetRow = el("div", { class: "presets" });
+  const presetButtons = new Map<string, HTMLButtonElement>();
+  for (const preset of PRESETS) {
+    const btn = el("button", { type: "button", class: "preset" });
+    btn.addEventListener("click", () => cb.onPreset(preset.id));
+    presetButtons.set(preset.id, btn);
+    presetRow.append(btn);
+  }
   const dayHint = el("p", { class: "hint" });
   const duringHint = el("p", { class: "hint" });
   const bucketHint = el("p", { class: "hint" });
@@ -277,7 +310,7 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
 
   main.append(
     el("section", { class: "card" }, [
-      dayTitle, dayHint, duringHint, dayMeter, dayMeterLabel, dayWarning, bucketHint, dayBody,
+      dayTitle, presetTitle, presetHint, presetRow, dayHint, duringHint, dayMeter, dayMeterLabel, dayWarning, bucketHint, dayBody,
     ]),
   );
 
@@ -379,7 +412,7 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
     select.value = current;
   }
 
-  return function update(state: AppState): void {
+  function update(state: AppState): void {
     const { lang, profile } = state;
     const ledger = computeLedger(profile);
     focused = document.activeElement;
@@ -424,6 +457,25 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
       const period = computeLedger({ ...profile, improvement: 0 });
       periodNote.textContent =
         `${t(lang, "horizon.period")} ${years(lang, ledger.remainingYears - period.remainingYears)}`;
+    }
+
+    // The clock runs on its own timer; this only re-points it.
+    clockCaption.textContent = t(lang, "clock.caption");
+    clockLegend.textContent = t(lang, "clock.legend");
+    clock.set(
+      h.medianAge > 0 ? profile.age / h.medianAge : 0,
+      ledger.remainingYears * 365.2425 * 86400,
+    );
+
+    presetTitle.textContent = t(lang, "preset.title");
+    presetHint.textContent = t(lang, "preset.hint");
+    for (const preset of PRESETS) {
+      const btn = presetButtons.get(preset.id)!;
+      btn.textContent = "";
+      btn.append(
+        el("span", { class: "preset-name" }, [preset.labels[lang]]),
+        el("span", { class: "preset-note" }, [preset.note[lang]]),
+      );
     }
 
     // weeks -- rebuilt only when the horizon actually moves
@@ -669,6 +721,11 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
     methodPrivacy.textContent = t(lang, "method.privacy");
     shareBtn.textContent = t(lang, "share.copy");
     resetBtn.textContent = t(lang, "share.reset");
+  }
+
+  return {
+    update,
+    dispose: () => clock.stop(),
   };
 }
 

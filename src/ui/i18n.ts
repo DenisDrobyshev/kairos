@@ -59,6 +59,14 @@ const ru: Dict = {
   "weeks.caption":
     "Один квадрат — одна неделя. Строка — год. Тёмные уже потрачены.",
 
+  "preset.title": "Начни с похожего уклада",
+  "preset.hint":
+    "Один нажим заполняет весь день целиком. Дальше подправишь под себя — это быстрее, чем ставить тринадцать ползунков с нуля.",
+
+  "clock.caption":
+    "Внутри — обычные часы, они идут прямо сейчас. Кольцо снаружи — твоя жизнь: полный оборот это медианный возраст смерти, закрашено то, что уже прошло.",
+  "clock.legend": "лет · дней · часов до медианы",
+
   "day.title": "Обычные сутки",
   "day.hint":
     "Расписывай обычный будний день, а не идеальный. Если сегодня вышло не как всегда — бери то, что повторяется чаще. Ставь честно: сравнивать ты будешь с собой, и завышенные цифры обманут только тебя. Дробные часы можно: 15 минут — это 0.25, полчаса — 0.5.",
@@ -201,6 +209,14 @@ const en: Dict = {
   "weeks.left": "Left, to the median",
   "weeks.bonus": "If you are lucky",
   "weeks.caption": "One square is one week. One row is one year. The dark ones are gone.",
+
+  "preset.title": "Start from something close",
+  "preset.hint":
+    "One tap fills the whole day. Correcting it afterwards is far quicker than setting thirteen sliders from zero.",
+
+  "clock.caption":
+    "Inside is an ordinary clock, running right now. The outer ring is your life: a full turn is the median age at death, and the filled part has gone.",
+  "clock.legend": "years · days · hours to the median",
 
   "day.title": "An ordinary day",
   "day.hint":

@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type ViewCallbacks } from "../src/ui/view.js";
 import { DEFAULT_TARGET, decode, defaultProfile, encode, type AppState } from "../src/ui/state.js";
-import { CATEGORIES, type Profile } from "../src/core/index.js";
+import { CATEGORIES, PRESETS, type Profile } from "../src/core/index.js";
 
 function state(over: Partial<Profile> = {}, lang: "ru" | "en" = "ru"): AppState {
   return { lang, target: DEFAULT_TARGET, profile: { ...defaultProfile(), ...over } };
@@ -12,8 +12,9 @@ function harness(cb: Partial<ViewCallbacks> = {}) {
   const root = document.createElement("div");
   document.body.append(root);
   const calls: Array<Partial<Profile>> = [];
-  const update = mount(root, {
+  const view = mount(root, {
     onProfile: (p) => calls.push(p),
+    onPreset: () => {},
     onTarget: () => {},
     onApplyPlan: () => {},
     onLang: () => {},
@@ -21,8 +22,16 @@ function harness(cb: Partial<ViewCallbacks> = {}) {
     onShare: () => {},
     ...cb,
   });
-  return { root, update, calls };
+  mounted.push(view);
+  return { root, update: view.update, calls };
 }
+
+/** Every mounted view owns a running clock, so each one gets torn down. */
+const mounted: Array<{ dispose(): void }> = [];
+
+afterEach(() => {
+  while (mounted.length > 0) mounted.pop()!.dispose();
+});
 
 beforeEach(() => {
   document.body.textContent = "";
@@ -120,6 +129,46 @@ describe("view", () => {
     const { root, update } = harness();
     expect(() => update(state({ age: 80, retirementAge: 65 }))).not.toThrow();
     expect(root.querySelectorAll(".week.lived")).toHaveLength(80 * 52);
+  });
+});
+
+describe("clock and presets", () => {
+  it("draws a clock with a life ring and a running face", () => {
+    const { root, update } = harness();
+    update(state());
+    expect(root.querySelector("svg.clock")).not.toBeNull();
+    // 60 minute ticks plus the two ring circles and the face.
+    expect(root.querySelectorAll("svg.clock line").length).toBeGreaterThan(60);
+    expect(root.querySelector(".clock-readout")?.textContent).toMatch(/\d+ · \d+ · \d{2}:\d{2}:\d{2}/);
+  });
+
+  it("points the life ring further along for an older profile", () => {
+    const { root, update } = harness();
+    const arc = () => {
+      const circles = [...root.querySelectorAll("svg.clock circle")];
+      const lived = circles.find((c) => c.getAttribute("stroke") === "var(--alive)");
+      return Number(lived?.getAttribute("stroke-dasharray")?.split(" ")[0] ?? 0);
+    };
+    update(state({ age: 25 }));
+    const young = arc();
+    update(state({ age: 60 }));
+    expect(arc()).toBeGreaterThan(young);
+  });
+
+  it("offers a preset for every shape of life it knows", () => {
+    const { root, update } = harness();
+    update(state());
+    expect(root.querySelectorAll(".preset")).toHaveLength(PRESETS.length);
+    expect(root.querySelector(".preset-name")?.textContent).toBeTruthy();
+    expect(root.querySelector(".preset-note")?.textContent).toBeTruthy();
+  });
+
+  it("asks for a preset by id when one is clicked", () => {
+    const picked: string[] = [];
+    const { root, update } = harness({ onPreset: (id) => picked.push(id) });
+    update(state());
+    root.querySelector<HTMLButtonElement>(".preset")!.click();
+    expect(picked).toEqual([PRESETS[0]!.id]);
   });
 });
 
