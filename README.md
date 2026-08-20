@@ -2,7 +2,7 @@
 
 A calculator for the time you have left: how many free hours you have, and where the rest of them go.
 
-**[denisdrobyshev.github.io/kairos](https://denisdrobyshev.github.io/kairos/)** · [По-русски](README.ru.md)
+Welcome to site: **[denisdrobyshev.github.io/kairos](https://denisdrobyshev.github.io/kairos/)** · [In russian](README.ru.md)
 
 The Greeks had two words for time: *chronos*, time as measurable quantity, and *kairos*, time as quality and the right moment. This project is about converting the first into the second.
 
