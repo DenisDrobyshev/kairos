@@ -2,7 +2,7 @@
 
 A calculator for the time you have left. It computes not how many years remain, but where those years are already committed.
 
-[По-русски](README.ru.md)
+**[denisdrobyshev.github.io/kairos](https://denisdrobyshev.github.io/kairos/)** · [По-русски](README.ru.md)
 
 The Greeks had two words for time: *chronos*, time as measurable quantity, and *kairos*, time as quality and the right moment. This project is about converting the first into the second.
 

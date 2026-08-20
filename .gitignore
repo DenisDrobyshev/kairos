@@ -3,3 +3,8 @@ dist/
 .DS_Store
 *.local
 .vite/
+
+# локальные конфиги редакторов и инструментов
+.claude/
+.vscode/
+.idea/
