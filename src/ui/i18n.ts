@@ -11,9 +11,9 @@ export const LANGS: readonly Lang[] = ["ru", "en"] as const;
 type Dict = Record<string, string>;
 
 const ru: Dict = {
-  "app.tagline": "Сколько у тебя осталось на самом деле",
+  "app.tagline": "Сколько времени у тебя осталось на самом деле",
   "app.lede":
-    "Не «сколько лет», а куда они уже расписаны. Введи свой день — увидишь, во что он превращается на дистанции жизни.",
+    "Введи свой обычный день по часам. Посчитаем, во что он складывается за всю оставшуюся жизнь.",
 
   "nav.you": "Ты",
   "nav.day": "Твой день",
@@ -129,9 +129,9 @@ const ru: Dict = {
 };
 
 const en: Dict = {
-  "app.tagline": "How much you actually have left",
+  "app.tagline": "How much time you actually have left",
   "app.lede":
-    "Not how many years, but where they are already committed. Enter your ordinary day and watch what it becomes at the scale of a life.",
+    "Enter your ordinary day, hour by hour. See what it adds up to over the rest of your life.",
 
   "nav.you": "You",
   "nav.day": "Your day",

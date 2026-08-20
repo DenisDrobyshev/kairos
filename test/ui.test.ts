@@ -81,9 +81,9 @@ describe("view", () => {
     const ru = root.textContent ?? "";
     update(state({}, "en"));
     const en = root.textContent ?? "";
-    expect(ru).toContain("Сколько у тебя осталось");
-    expect(en).toContain("How much you actually have left");
-    expect(en).not.toContain("Сколько у тебя осталось");
+    expect(ru).toContain("Сколько времени у тебя осталось");
+    expect(en).toContain("How much time you actually have left");
+    expect(en).not.toContain("Сколько времени у тебя осталось");
   });
 
   it("emits a sparse patch when a slider moves", () => {

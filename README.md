@@ -1,6 +1,6 @@
 # kairos
 
-A calculator for the time you have left. It computes not how many years remain, but where those years are already committed.
+A calculator for the time you have left: how many free hours you have, and where the rest of them go.
 
 **[denisdrobyshev.github.io/kairos](https://denisdrobyshev.github.io/kairos/)** · [По-русски](README.ru.md)
 
