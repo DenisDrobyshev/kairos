@@ -7,6 +7,10 @@ import {
   survival,
   quantileAge,
   computeLedger,
+  buildPlan,
+  applyPlan,
+  ownTimePerDay,
+  CATEGORIES,
   levers,
   dailyHourValue,
   defaultHours,
@@ -300,6 +304,101 @@ describe("overlapping activities", () => {
     expect(feeds.overlapHours).toBeCloseTo(commute.leverArm * 1, 6);
     // If it had been charged at the daily cadence it would be much larger.
     expect(feeds.overlapHours).toBeLessThan(commute.leverArm * 1.5);
+  });
+});
+
+describe("planner", () => {
+  const ownNow = () => ownTimePerDay(baseProfile());
+
+  it("returns nothing to do when the target is already met", () => {
+    const plan = buildPlan(baseProfile(), ownNow() - 1);
+    expect(plan.free).toHaveLength(0);
+    expect(plan.costly).toHaveLength(0);
+    expect(plan.shortfallPerDay).toBe(0);
+  });
+
+  /**
+   * The load-bearing test. A plan that promises hours it does not deliver is
+   * worse than no plan, so this builds one, writes it into the profile, and
+   * checks the model agrees with what the planner claimed.
+   */
+  it("delivers what it promises once applied", () => {
+    for (const target of [3, 4, 5, 6]) {
+      const p = baseProfile();
+      const plan = buildPlan(p, target);
+      const after = ownTimePerDay(applyPlan(p, plan));
+      expect(after).toBeCloseTo(plan.achievedPerDay, 1);
+      if (plan.reachable) expect(after).toBeGreaterThanOrEqual(target - 0.15);
+    }
+  });
+
+  it("never proposes sleeping less than the floor", () => {
+    // A target far past what the day allows, to make it reach for everything.
+    const plan = buildPlan(baseProfile(), 20);
+    const after = applyPlan(baseProfile(), plan);
+    expect(after.hours.sleep).toBeGreaterThanOrEqual(7);
+    for (const cat of CATEGORIES) {
+      const floor = cat.floorHours ?? 0;
+      if (floor > 0) expect(after.hours[cat.id] ?? 0).toBeGreaterThanOrEqual(floor - 1e-9);
+    }
+  });
+
+  it("never proposes cutting what you called living", () => {
+    const plan = buildPlan(baseProfile(), 20);
+    const alive = CATEGORIES.filter(
+      (c) => (defaultBuckets()[c.id] ?? c.defaultBucket) === "alive",
+    ).map((c) => c.id);
+    for (const step of plan.costly) {
+      expect(alive).not.toContain(step.categoryId);
+    }
+  });
+
+  it("puts the free moves in the free list and charges them nothing", () => {
+    const plan = buildPlan(baseProfile(), 6);
+    for (const step of plan.free) {
+      expect(step.kind).toBe("overlap");
+      expect(step.effort).toBe(0);
+    }
+  });
+
+  it("reaches for the cheapest sacrifice first", () => {
+    const plan = buildPlan(baseProfile(), 8);
+    const efforts = plan.costly.map((s) => s.effort);
+    expect([...efforts].sort((a, b) => a - b)).toEqual(efforts);
+    // Scrolling goes before anything that would actually hurt.
+    if (plan.costly.length > 1) {
+      expect(plan.costly[0]!.effort).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it("admits a target it cannot reach instead of inventing hours", () => {
+    const plan = buildPlan(baseProfile(), 22);
+    expect(plan.reachable).toBe(false);
+    expect(plan.shortfallPerDay).toBeGreaterThan(0);
+    expect(plan.achievedPerDay).toBeLessThan(22);
+    // And what it does propose still has to be real.
+    const after = ownTimePerDay(applyPlan(baseProfile(), plan));
+    expect(after).toBeCloseTo(plan.achievedPerDay, 1);
+  });
+
+  it("does not overshoot a modest target", () => {
+    const target = ownNow() + 0.5;
+    const plan = buildPlan(baseProfile(), target);
+    expect(plan.achievedPerDay).toBeLessThan(target + 0.2);
+  });
+
+  it("stops offering an overlap once the hours already carry one", () => {
+    const busy = baseProfile({ during: { commute: { activity: "craft", hours: 1 } } });
+    const plan = buildPlan(busy, 8);
+    expect(plan.free.map((s) => s.categoryId)).not.toContain("commute");
+  });
+
+  it("counts overlapped hours as your own only when the guest is living", () => {
+    const base = baseProfile();
+    const toLeak = baseProfile({ during: { commute: { activity: "feeds", hours: 1 } } });
+    const toAlive = baseProfile({ during: { commute: { activity: "craft", hours: 1 } } });
+    expect(ownTimePerDay(toLeak)).toBeCloseTo(ownTimePerDay(base), 6);
+    expect(ownTimePerDay(toAlive)).toBeGreaterThan(ownTimePerDay(base));
   });
 });
 

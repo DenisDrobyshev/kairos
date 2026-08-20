@@ -59,6 +59,29 @@ export interface Category {
   readonly canHost?: boolean;
   /** Can be the thing running on top: a podcast, a feed, a phone call. */
   readonly canOverlap?: boolean;
+  /**
+   * The largest share of this host a second activity can plausibly cover. You
+   * can listen for the whole commute; you cannot spend every minute of dinner
+   * on the phone. Without a cap the planner would "free" a whole day by
+   * relabelling it, which is cheating dressed as optimisation.
+   */
+  readonly overlapCap?: number;
+  /**
+   * Which second activities actually fit this one, best first. Without it the
+   * planner just picks your largest `alive` category and produces nonsense like
+   * spending the train ride with friends.
+   */
+  readonly overlapPrefers?: readonly string[];
+  /**
+   * Hours below which cutting stops being a lifestyle change and starts being
+   * a health problem. The planner never proposes going under this.
+   */
+  readonly floorHours?: number;
+  /**
+   * How much it costs you to give up an hour here, 1 (trivial) to 10 (do not).
+   * Ordering the plan by this is what makes it a plan rather than a list.
+   */
+  readonly resistance?: number;
   readonly aw?: AwMatcher;
 }
 
@@ -72,6 +95,8 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "neutral",
     max: 12,
     step: 0.25,
+    floorHours: 7,
+    resistance: 10,
     group: "given",
     aw: { offScreen: true },
   },
@@ -84,6 +109,7 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "neutral",
     max: 16,
     step: 0.5,
+    resistance: 8,
     group: "obligation",
     aw: {
       apps: ["Code\.exe", "idea64", "Excel", "WINWORD", "Slack", "Teams", "Outlook"],
@@ -100,6 +126,10 @@ export const CATEGORIES: readonly Category[] = [
     max: 5,
     step: 0.25,
     canHost: true,
+    floorHours: 0,
+    resistance: 3,
+    overlapCap: 1.0,
+    overlapPrefers: ["craft", "people", "video", "feeds"],
     group: "obligation",
     aw: { offScreen: true },
   },
@@ -113,6 +143,10 @@ export const CATEGORIES: readonly Category[] = [
     max: 6,
     step: 0.25,
     canHost: true,
+    floorHours: 0.75,
+    resistance: 6,
+    overlapCap: 0.5,
+    overlapPrefers: ["people", "video", "craft"],
     group: "upkeep",
     aw: { offScreen: true },
   },
@@ -125,6 +159,8 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "neutral",
     max: 4,
     step: 0.25,
+    floorHours: 0.5,
+    resistance: 7,
     group: "upkeep",
     aw: { offScreen: true },
   },
@@ -138,6 +174,10 @@ export const CATEGORIES: readonly Category[] = [
     max: 6,
     step: 0.25,
     canHost: true,
+    floorHours: 0.5,
+    resistance: 4,
+    overlapCap: 0.6,
+    overlapPrefers: ["craft", "people", "video", "feeds"],
     group: "upkeep",
     aw: { offScreen: true },
   },
@@ -150,6 +190,8 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "neutral",
     max: 20,
     step: 0.5,
+    floorHours: 0.5,
+    resistance: 4,
     group: "upkeep",
     aw: {
       urls: ["gosuslugi\.ru", "nalog\.ru", "\bbank\b", "sberbank", "tinkoff"],
@@ -165,6 +207,8 @@ export const CATEGORIES: readonly Category[] = [
     max: 10,
     step: 0.25,
     canOverlap: true,
+    floorHours: 0,
+    resistance: 1,
     group: "chosen",
     aw: {
       apps: ["Telegram", "Discord", "Instagram"],
@@ -184,6 +228,8 @@ export const CATEGORIES: readonly Category[] = [
     max: 10,
     step: 0.25,
     canOverlap: true,
+    floorHours: 0,
+    resistance: 1,
     group: "chosen",
     aw: {
       apps: ["vlc", "mpv", "Netflix"],
@@ -199,6 +245,8 @@ export const CATEGORIES: readonly Category[] = [
     defaultBucket: "leak",
     max: 10,
     step: 0.25,
+    floorHours: 0,
+    resistance: 2,
     group: "chosen",
     aw: { apps: ["steam", "Steam\.exe", "EpicGames", "battle\.net"] },
   },
@@ -212,6 +260,7 @@ export const CATEGORIES: readonly Category[] = [
     max: 12,
     step: 0.25,
     canOverlap: true,
+    resistance: 9,
     group: "chosen",
     aw: { offScreen: true },
   },
@@ -225,6 +274,9 @@ export const CATEGORIES: readonly Category[] = [
     max: 6,
     step: 0.25,
     canHost: true,
+    resistance: 9,
+    overlapCap: 0.7,
+    overlapPrefers: ["craft", "people", "feeds"],
     group: "chosen",
     aw: { offScreen: true },
   },
@@ -238,6 +290,7 @@ export const CATEGORIES: readonly Category[] = [
     max: 12,
     step: 0.25,
     canOverlap: true,
+    resistance: 9,
     group: "chosen",
     aw: {
       apps: ["Code\.exe", "idea64", "Obsidian", "Anki"],

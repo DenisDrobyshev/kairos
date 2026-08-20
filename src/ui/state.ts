@@ -24,9 +24,14 @@ import { LANGS, type Lang } from "./i18n.js";
 export interface AppState {
   readonly lang: Lang;
   readonly profile: Profile;
+  /** Hours a day of your own that the planner aims for. */
+  readonly target: number;
 }
 
 const SCHEMA = 1;
+
+/** Four hours a day of your own is ambitious but not fantasy. */
+export const DEFAULT_TARGET = 4;
 const STORAGE_KEY = "kairos.state.v1";
 
 const BUCKET_CODE: Record<Bucket, string> = { alive: "a", neutral: "n", leak: "l" };
@@ -87,6 +92,7 @@ export function encode(state: AppState): string {
   const q = new URLSearchParams({
     v: String(SCHEMA),
     lang: state.lang,
+    tgt: String(state.target),
     age: String(p.age),
     sex: p.sex,
     reg: p.region,
@@ -105,7 +111,7 @@ export function decode(raw: string, fallbackLang: Lang): AppState {
   const base = defaultProfile();
   const q = new URLSearchParams(raw.replace(/^#/, ""));
   if (q.get("v") !== String(SCHEMA)) {
-    return { lang: fallbackLang, profile: base };
+    return { lang: fallbackLang, profile: base, target: DEFAULT_TARGET };
   }
 
   const hours: Record<string, number> = { ...base.hours };
@@ -131,6 +137,7 @@ export function decode(raw: string, fallbackLang: Lang): AppState {
   const age = clamp(Number(q.get("age")), 1, 100);
   return {
     lang: oneOf(q.get("lang"), LANGS, fallbackLang),
+    target: clamp(Number(q.get("tgt")), 0, 24),
     profile: {
       age,
       sex: oneOf(q.get("sex"), SEXES, base.sex),
@@ -156,7 +163,7 @@ export function load(fallbackLang: Lang): AppState {
   } catch {
     // Private mode, disabled storage -- defaults are a fine outcome.
   }
-  return { lang: fallbackLang, profile: defaultProfile() };
+  return { lang: fallbackLang, profile: defaultProfile(), target: DEFAULT_TARGET };
 }
 
 export function persist(state: AppState): void {

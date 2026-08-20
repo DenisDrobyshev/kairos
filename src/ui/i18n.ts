@@ -112,6 +112,28 @@ const ru: Dict = {
   "levers.vacation": "Ещё {days} дней отпуска в году",
   "levers.exchange": "Один час в день на всю оставшуюся жизнь — это",
 
+  "plan.title": "План под твою цель",
+  "plan.target": "Сколько часов в день ты хочешь на себя",
+  "plan.current": "Сейчас у тебя",
+  "plan.perDay": "ч/день",
+  "plan.free.title": "Ничего не отнимая",
+  "plan.free.hint":
+    "Эти часы ты и так тратишь. Меняется не их количество, а то, чем они заняты. Времени здесь не появляется — появляется смысл в том, которое уже уходит.",
+  "plan.costly.title": "А вот здесь придётся отнять",
+  "plan.costly.hint":
+    "Отсортировано по тому, насколько тяжело далось бы, а не по величине. Сначала то, о чём не пожалеешь.",
+  "plan.step.overlap": "{category}: занять {hours} ч — {guest}",
+  "plan.step.cut": "{category}: убрать {hours} ч",
+  "plan.step.fourDayWeek": "Перейти на четырёхдневную неделю",
+  "plan.step.remote": "Работать из дома — дорога исчезает",
+  "plan.gain": "+{hours} ч/день",
+  "plan.result": "Получится {hours} ч в день — это {years} за оставшуюся жизнь",
+  "plan.done": "Цель уже достигнута. Подними планку, если хочешь увидеть план.",
+  "plan.short":
+    "Даже если сделать всё перечисленное, до цели не хватит {hours} ч в день. Планка выше, чем позволяют сутки: резать сон ниже семи часов и отнимать у того, что ты назвал жизнью, план не станет.",
+  "plan.apply": "Применить план",
+  "plan.free.none": "Нечего перекрывать: всё уже занято тем, что ты ценишь.",
+
   "method.title": "Откуда числа",
   "method.source":
     "Смертность взята из таблиц дожития ВОЗ за {year} год. Модель Гомперца–Мейкема подогнана к ним скриптом в репозитории; на всех взрослых возрастах она воспроизводит опубликованную ожидаемую продолжительность с ошибкой не более {error} года.",
@@ -232,6 +254,28 @@ const en: Dict = {
   "levers.retireEarly": "Stop working {years} years earlier",
   "levers.vacation": "{days} more vacation days a year",
   "levers.exchange": "One hour a day, for the rest of your life, is worth",
+
+  "plan.title": "A plan for your target",
+  "plan.target": "Hours a day you want to be your own",
+  "plan.current": "Right now you have",
+  "plan.perDay": "h/day",
+  "plan.free.title": "Without giving anything up",
+  "plan.free.hint":
+    "You already spend these hours. What changes is not how many there are but what fills them. No time appears here — meaning does, in time that was leaving anyway.",
+  "plan.costly.title": "And here something has to go",
+  "plan.costly.hint":
+    "Ranked by how much it would cost you, not by size. What you would not miss comes first.",
+  "plan.step.overlap": "{category}: fill {hours}h with {guest}",
+  "plan.step.cut": "{category}: cut {hours}h",
+  "plan.step.fourDayWeek": "Move to a four-day week",
+  "plan.step.remote": "Work from home — the commute disappears",
+  "plan.gain": "+{hours} h/day",
+  "plan.result": "That gets you {hours}h a day — {years} over the rest of your life",
+  "plan.done": "Already there. Raise the bar if you want to see a plan.",
+  "plan.short":
+    "Even doing all of the above leaves you {hours}h a day short. The bar is higher than the day allows: the plan will not cut sleep below seven hours or take from what you called living.",
+  "plan.apply": "Apply this plan",
+  "plan.free.none": "Nothing to overlap: those hours already go to things you value.",
 
   "method.title": "Where the numbers come from",
   "method.source":

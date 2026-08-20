@@ -10,7 +10,9 @@
 
 import {
   CATEGORIES,
+  CATEGORY_BY_ID,
   BUCKETS,
+  buildPlan,
   computeLedger,
   levers,
   dailyHourValue,
@@ -21,6 +23,7 @@ import {
   type Category,
   type HorizonBasis,
   type Overlap,
+  type PlanStep,
   type Profile,
   type Region,
   type Sex,
@@ -31,6 +34,8 @@ import { age as fmtAge, bigCount, hours, hoursAsYears, num, percent, years } fro
 
 export interface ViewCallbacks {
   onProfile(patch: Partial<Profile>): void;
+  onTarget(hoursPerDay: number): void;
+  onApplyPlan(): void;
   onLang(lang: Lang): void;
   onReset(): void;
   onShare(): Promise<void> | void;
@@ -291,6 +296,45 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
     el("section", { class: "card" }, [ledgerTitle, bucketBar, bucketLegend, ledgerBody]),
   );
 
+  // ---- section: plan ------------------------------------------------------
+  const planTitle = el("h2");
+  const planTargetLabel = el("label", { for: "f-target" });
+  const planTargetInput = el("input", {
+    type: "range", min: "0", max: "12", step: "0.25", id: "f-target",
+  });
+  const planTargetValue = el("span", { class: "cat-value" });
+  const planCurrent = el("p", { class: "hint" });
+  const planFreeTitle = el("h3", { class: "group" });
+  const planFreeHint = el("p", { class: "hint" });
+  const planFreeBody = el("div", { class: "plan-steps" });
+  const planCostlyTitle = el("h3", { class: "group" });
+  const planCostlyHint = el("p", { class: "hint" });
+  const planCostlyBody = el("div", { class: "plan-steps" });
+  const planResult = el("p", { class: "exchange" });
+  const planShort = el("p", { class: "warning", hidden: "" });
+  const planApply = el("button", { type: "button", class: "action" });
+
+  planTargetInput.addEventListener("input", () =>
+    cb.onTarget(Number(planTargetInput.value)),
+  );
+  planApply.addEventListener("click", () => cb.onApplyPlan());
+
+  main.append(
+    el("section", { class: "card plan" }, [
+      planTitle,
+      el("div", { class: "plan-target" }, [
+        planTargetLabel,
+        planTargetInput,
+        planTargetValue,
+      ]),
+      planCurrent,
+      planFreeTitle, planFreeHint, planFreeBody,
+      planCostlyTitle, planCostlyHint, planCostlyBody,
+      planResult, planShort,
+      el("div", { class: "actions" }, [planApply]),
+    ]),
+  );
+
   // ---- section: levers ----------------------------------------------------
   const leversTitle = el("h2");
   const leversHint = el("p", { class: "hint" });
@@ -519,6 +563,69 @@ export function mount(root: El, cb: ViewCallbacks): (s: AppState) => void {
         ]),
       );
     }
+
+    // plan
+    const plan = buildPlan(profile, state.target);
+    const catLabel = (id: string): string =>
+      CATEGORY_BY_ID.get(id)?.labels[lang] ?? id;
+
+    planTitle.textContent = t(lang, "plan.title");
+    planTargetLabel.textContent = t(lang, "plan.target");
+    if (focused !== planTargetInput) planTargetInput.value = String(state.target);
+    planTargetValue.textContent = `${num(lang, state.target, state.target % 1 === 0 ? 0 : 2)} ${t(lang, "plan.perDay")}`;
+    planCurrent.textContent =
+      `${t(lang, "plan.current")} ${num(lang, plan.currentPerDay, 1)} ${t(lang, "plan.perDay")}`;
+
+    const renderSteps = (host: El, steps: readonly PlanStep[]): void => {
+      host.textContent = "";
+      for (const step of steps) {
+        const label = t(lang, `plan.step.${step.key}`, {
+          category: catLabel(step.categoryId),
+          guest: step.guestId ? catLabel(step.guestId) : "",
+          hours: num(lang, step.hours, step.hours % 1 === 0 ? 0 : 2),
+        });
+        host.append(
+          el("div", { class: "plan-step" }, [
+            el("span", { class: `tag tag-${step.kind}` }, [t(lang, `levers.${step.kind === "structural" ? "structural" : "habit"}`)]),
+            el("span", { class: "lever-label" }, [label]),
+            el("span", { class: "lever-value" }, [
+              t(lang, "plan.gain", { hours: num(lang, step.gainPerDay, 2) }),
+            ]),
+          ]),
+        );
+      }
+    };
+
+    const done = plan.free.length === 0 && plan.costly.length === 0;
+    planFreeTitle.hidden = done;
+    planFreeHint.hidden = done;
+    planCostlyTitle.hidden = done || plan.costly.length === 0;
+    planCostlyHint.hidden = done || plan.costly.length === 0;
+    planApply.hidden = done;
+
+    planFreeTitle.textContent = t(lang, "plan.free.title");
+    planFreeHint.textContent =
+      plan.free.length > 0 ? t(lang, "plan.free.hint") : t(lang, "plan.free.none");
+    planCostlyTitle.textContent = t(lang, "plan.costly.title");
+    planCostlyHint.textContent = t(lang, "plan.costly.hint");
+    planApply.textContent = t(lang, "plan.apply");
+    renderSteps(planFreeBody, plan.free);
+    renderSteps(planCostlyBody, plan.costly);
+
+    planResult.textContent = done
+      ? t(lang, "plan.done")
+      : t(lang, "plan.result", {
+          hours: num(lang, plan.achievedPerDay, 1),
+          // Hours a day, held for the rest of the horizon, expressed as years.
+          years: years(
+            lang,
+            hoursToYears(plan.achievedPerDay * dailyHourValue(ledger)),
+          ),
+        });
+    planShort.hidden = plan.shortfallPerDay <= 0.01;
+    planShort.textContent = t(lang, "plan.short", {
+      hours: num(lang, plan.shortfallPerDay, 1),
+    });
 
     // levers
     leversTitle.textContent = t(lang, "levers.title");

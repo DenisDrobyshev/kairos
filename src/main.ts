@@ -1,4 +1,4 @@
-import { CATEGORY_BY_ID, type Profile } from "./core/index.js";
+import { CATEGORY_BY_ID, applyPlan, buildPlan, type Profile } from "./core/index.js";
 import { detectLang, type Lang } from "./ui/i18n.js";
 import { defaultProfile, encode, load, persist, type AppState } from "./ui/state.js";
 import { flashShare, mount } from "./ui/view.js";
@@ -54,6 +54,17 @@ function applyPatch(profile: Profile, patch: Partial<Profile>): Profile {
 const update = mount(root, {
   onProfile(patch) {
     state = { ...state, profile: applyPatch(state.profile, patch) };
+    commit();
+  },
+  onTarget(hoursPerDay: number) {
+    state = { ...state, target: hoursPerDay };
+    commit();
+  },
+  onApplyPlan() {
+    // Writing the plan into the profile makes it inspectable in the ledger
+    // rather than a promise sitting next to the numbers it does not affect.
+    const plan = buildPlan(state.profile, state.target);
+    state = { ...state, profile: applyPlan(state.profile, plan) };
     commit();
   },
   onLang(lang: Lang) {

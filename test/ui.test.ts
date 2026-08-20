@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type ViewCallbacks } from "../src/ui/view.js";
-import { decode, defaultProfile, encode, type AppState } from "../src/ui/state.js";
+import { DEFAULT_TARGET, decode, defaultProfile, encode, type AppState } from "../src/ui/state.js";
 import { CATEGORIES, type Profile } from "../src/core/index.js";
 
 function state(over: Partial<Profile> = {}, lang: "ru" | "en" = "ru"): AppState {
-  return { lang, profile: { ...defaultProfile(), ...over } };
+  return { lang, target: DEFAULT_TARGET, profile: { ...defaultProfile(), ...over } };
 }
 
 function harness(cb: Partial<ViewCallbacks> = {}) {
@@ -14,6 +14,8 @@ function harness(cb: Partial<ViewCallbacks> = {}) {
   const calls: Array<Partial<Profile>> = [];
   const update = mount(root, {
     onProfile: (p) => calls.push(p),
+    onTarget: () => {},
+    onApplyPlan: () => {},
     onLang: () => {},
     onReset: () => {},
     onShare: () => {},

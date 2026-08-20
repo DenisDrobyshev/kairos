@@ -405,6 +405,34 @@ input[type="range"] {
 .tag-structural { color: var(--alive); border-color: rgba(217, 194, 106, 0.35); }
 .lever-value { color: var(--alive); text-align: right; font-variant-numeric: tabular-nums; }
 
+/* ---- plan --------------------------------------------------------------- */
+
+.plan-target {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.plan-target label { flex: 0 1 auto; color: var(--text); }
+.plan-target input[type="range"] { flex: 1 1 12rem; width: auto; }
+
+.plan-steps { display: flex; flex-direction: column; margin-bottom: 0.5rem; }
+
+.plan-step {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.tag-overlap { color: var(--alive); border-color: rgba(217, 194, 106, 0.35); }
+.tag-cut { color: var(--dim); }
+
 /* ---- method ------------------------------------------------------------- */
 
 .method p { color: var(--dim); font-size: 0.9rem; max-width: 70ch; }
@@ -437,8 +465,9 @@ input[type="range"] {
   .seg { flex: 1; }
   .ledger-row { grid-template-columns: 1fr; gap: 0.3rem; }
   .ledger-num { text-align: left; }
-  .lever { grid-template-columns: auto 1fr; }
+  .lever, .plan-step { grid-template-columns: auto 1fr; }
   .lever-value { grid-column: 1 / -1; text-align: left; }
+  .plan-step .lever-value { grid-column: 1 / -1; text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {
