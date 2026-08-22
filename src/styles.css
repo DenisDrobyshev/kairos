@@ -296,7 +296,13 @@ input[type="checkbox"] { accent-color: var(--alive); width: 1rem; height: 1rem; 
   flex-direction: column;
   gap: 1px;
   margin: 1rem 0 0.75rem;
-  max-width: min(100%, 34rem);
+  /*
+   * Width comes from the scroll container, never from the content. The rows are
+   * `repeat(52, 1fr)`, and a fraction has nothing to divide inside a
+   * shrink-to-fit parent -- put this in a bare flex item and the whole grid
+   * collapses to a few pixels wide with zero-size cells.
+   */
+  width: 100%;
 }
 
 .week-row { display: grid; grid-template-columns: repeat(52, 1fr); gap: 1px; }
@@ -308,7 +314,12 @@ input[type="checkbox"] { accent-color: var(--alive); width: 1rem; height: 1rem; 
   flex-wrap: wrap;
 }
 
-.weeks-scroll { flex: 0 1 auto; max-width: 100%; overflow-x: auto; }
+.weeks-scroll {
+  flex: 1 1 20rem;
+  min-width: 0;
+  max-width: 34rem;
+  overflow-x: auto;
+}
 .weeks-side { flex: 1 1 13rem; min-width: 0; }
 .weeks-side .legend { margin-top: 0; }
 
