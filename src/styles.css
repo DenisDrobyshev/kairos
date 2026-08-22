@@ -75,7 +75,6 @@ header { padding: clamp(1.5rem, 6vw, 4rem) 0 2rem; }
   flex: 1 1 16rem;
   margin: 0;
   min-width: 0;
-  max-width: 46ch;
   color: var(--faint);
   font-size: 0.84rem;
   line-height: 1.45;
@@ -301,6 +300,17 @@ input[type="checkbox"] { accent-color: var(--alive); width: 1rem; height: 1rem; 
 }
 
 .week-row { display: grid; grid-template-columns: repeat(52, 1fr); gap: 1px; }
+
+.weeks-body {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  flex-wrap: wrap;
+}
+
+.weeks-scroll { flex: 0 1 auto; max-width: 100%; overflow-x: auto; }
+.weeks-side { flex: 1 1 13rem; min-width: 0; }
+.weeks-side .legend { margin-top: 0; }
 
 .week { aspect-ratio: 1; border-radius: 1px; background: var(--unallocated); }
 .week.lived { background: var(--lived); }
@@ -540,6 +550,18 @@ input[type="range"] {
 /* ---- small screens ------------------------------------------------------ */
 
 @media (max-width: 42rem) {
+  /*
+   * Fifty-two columns across a phone gives 5px cells, which read as noise
+   * rather than as weeks. The strip keeps a legible cell and scrolls inside its
+   * own container, so the row still means one year.
+   */
+  .weeks { min-width: 30rem; }
+
+  /* A 28px control is below every published minimum for a finger. */
+  .seg { min-height: 44px; }
+  .lang { min-height: 40px; padding: 0.45rem 0.7rem; }
+  input[type="checkbox"] { width: 1.25rem; height: 1.25rem; }
+
   .cat-row {
     grid-template-columns: 1fr;
     grid-template-areas: "head" "slider" "seg" "during";
@@ -547,8 +569,14 @@ input[type="range"] {
   }
   .segmented { justify-content: stretch; }
   .seg { flex: 1; }
-  .ledger-row { grid-template-columns: 1fr; gap: 0.3rem; }
-  .ledger-num { text-align: left; }
+  .ledger-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "name num" "bar bar";
+    gap: 0.25rem 0.6rem;
+  }
+  .ledger-name { grid-area: name; }
+  .ledger-num { grid-area: num; text-align: right; font-size: 0.82rem; }
+  .ledger-row .bar { grid-area: bar; }
   .lever, .plan-step { grid-template-columns: auto 1fr; }
   .lever-value { grid-column: 1 / -1; text-align: left; }
   .plan-step .lever-value { grid-column: 1 / -1; text-align: left; }

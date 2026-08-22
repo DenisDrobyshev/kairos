@@ -200,8 +200,17 @@ export function mount(root: El, cb: ViewCallbacks): MountedView {
     }
     weeksGrid.append(row);
   }
+  // The grid is a tall narrow column; the legend and caption sit beside it
+  // rather than under it, which fills the dead space to its right and takes a
+  // few hundred pixels off the scroll.
   main.append(
-    el("section", { class: "card" }, [weeksTitle, weeksLegend, weeksGrid, weeksCaption]),
+    el("section", { class: "card" }, [
+      weeksTitle,
+      el("div", { class: "weeks-body" }, [
+        el("div", { class: "weeks-scroll" }, [weeksGrid]),
+        el("div", { class: "weeks-side" }, [weeksLegend, weeksCaption]),
+      ]),
+    ]),
   );
 
   // ---- section: your day --------------------------------------------------
