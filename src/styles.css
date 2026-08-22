@@ -571,7 +571,10 @@ input[type="range"] {
   /* A 28px control is below every published minimum for a finger. */
   .seg { min-height: 44px; }
   .lang { min-height: 40px; padding: 0.45rem 0.7rem; }
-  input[type="checkbox"] { width: 1.25rem; height: 1.25rem; }
+  select, .during-select { min-height: 44px; }
+  input[type="checkbox"] { width: 1.5rem; height: 1.5rem; }
+  /* The label is `for`-linked, so widening it widens the target with it. */
+  .toggle-row label { padding: 0.4rem 0; }
 
   .cat-row {
     grid-template-columns: 1fr;
