@@ -2,7 +2,7 @@
 
 A calculator for the time you have left: how many free hours you have, and where the rest of them go.
 
-Welcome to site: **[denisdrobyshev.github.io/kairos](https://denisdrobyshev.github.io/kairos/)** · [In russian](README.ru.md)
+Site: [denisdrobyshev.github.io/kairos](https://denisdrobyshev.github.io/kairos/) | [Русский](README.ru.md)
 
 The Greeks had two words for time: *chronos*, time as measurable quantity, and *kairos*, time as quality and the right moment. This project is about converting the first into the second.
 
@@ -16,9 +16,9 @@ Calculators like this normally work by subtraction: take a lifespan, remove slee
 
 Here everything accumulates in hours from a single horizon and converts to other units only for display. Each category goes into one of three buckets, and the user assigns them:
 
-- **living** — you count it as lived;
-- **cost** — the price of existing;
-- **leak** — you would take it back.
+- living: you count it as lived;
+- cost: the price of existing;
+- leak: you would take it back.
 
 The same hour lands in different buckets for different people. The arithmetic does not settle that.
 
